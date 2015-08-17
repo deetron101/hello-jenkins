@@ -4,6 +4,6 @@ ssh app@46.101.231.88 <<EOF
   cd ~/hello-jenkins
   git pull
   npm install --production
-  NODE_ENV=production forever restartall
+  forever restartall
   exit
 EOF
