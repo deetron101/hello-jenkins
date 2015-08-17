@@ -1,10 +1,28 @@
 var express = require('express');
 var multer = require('multer');
 var fs = require('fs');
-
 var mongoose = require('mongoose');
-//mongoose.connect('mongodb://127.0.0.1/test');
-mongoose.connect('mongodb://deetron101:test@ds055762.mongolab.com:55762/deetron101');
+
+var memeSchema = new mongoose.Schema({
+  userid: Number,
+  filename: String,
+  name: String
+});
+
+var Meme = mongoose.model('Meme', memeSchema);
+
+var app = express();
+
+var dbString = 'mongodb://127.0.0.1/test';
+if (app.get('env') == 'production') {
+  console.log("This is production!");
+  dbString = 'mongodb://deetron101:test@ds055762.mongolab.com:55762/deetron101';
+}
+else {
+  console.log("This is dev");
+}
+
+mongoose.connect(dbString);
 
 var db = mongoose.connection;
 db.on('error', function (err) {
@@ -15,16 +33,6 @@ db.once('open', function () {
   console.log('connected.');
 });
 
-var memeSchema = new mongoose.Schema({
-  filename: String,
-  userid: Number,
-  filepath: String
-});
-
-var Meme = mongoose.model('Meme', memeSchema);
-
-var app = express();
-
 app.use('/', express.static(__dirname + '/public'));
 
 var storage = multer.diskStorage({
@@ -34,7 +42,6 @@ var storage = multer.diskStorage({
       fs.mkdirSync(dir);
     }
     cb(null, dir)
-
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + '-' + file.originalname)
@@ -42,14 +49,12 @@ var storage = multer.diskStorage({
 });
 
 var saveFiles = function(files) {
-
   for (var i in files) {
     file = files[i];
-    console.log(file);
     var newMeme = new Meme({
-        filename: file.filename,
         userid: 1,
-        filepath: file.path
+        filename: file.filename,
+        name: file.originalfilename
     });
     newMeme.save(function(err, newMeme) {
       if (err) {
@@ -63,15 +68,14 @@ var saveFiles = function(files) {
       }
     });
   }
-
 }
 
 var upload = multer({ storage: storage }).array('files');
 
 app.post('/api/upload', upload, function(req, res){
-    console.log("Upload Saving files");
+    console.log("Uploading files");
     saveFiles(req.files);
-    res.end("File uploaded.");
+    res.end("Success");
 });
 
 app.listen(process.env.PORT || 5000);
