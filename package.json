@@ -5,7 +5,8 @@
   "private": true,
   "dependencies": {
     "express": "*",
-    "multer": "*"
+    "multer": "*",
+    "mongoose": "*"
   },
   "devDependencies": {
     "mocha": "2.2.5",
