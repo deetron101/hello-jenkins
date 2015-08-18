@@ -3,7 +3,6 @@
 ssh app@46.101.231.88 <<EOF
   cd ~/hello-jenkins
   git pull
-  sudo export NODE_ENV=production
   npm install --production
   forever restartall
   exit
