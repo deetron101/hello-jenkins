@@ -1,6 +1,6 @@
 var request = require('supertest');
 
-var app = require('../app.js');
+var app = require('~/hello-jenkins/app.js');
 
 describe('GET /', function() {
   it('respond with index page', function(done) {
