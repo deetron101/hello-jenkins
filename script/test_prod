@@ -1,0 +1,8 @@
+#!/bin/sh
+
+ssh app@46.101.231.88 <<EOF
+  cd ~/hello-jenkins
+  git pull
+  ./node_modules/.bin/mocha ./test/test.js
+  exit
+EOF
