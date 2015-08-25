@@ -11,6 +11,8 @@ var expressJwt  = require('express-jwt'); // used to protect restricted routes
 
 var app         = express();
 
+console.log('Starting in '+app.get('env')+' mode');
+
 /* Config */
 var Config      = require('./config/config.'+app.get('env')); // get the right config file
 /* Models */
