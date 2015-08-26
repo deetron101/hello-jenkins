@@ -62,7 +62,7 @@ apiRoutes.post('/register', function(req, res) {
   User.findOne({ email: req.body.email }, function(err, user) {
     if (err) throw err;
     if (user) {
-      res.json({ success: false, message: 'Register failed. User already exists.'});
+      res.status(422).json({success: false, message: 'Register failed. User already exists.'});
     } else {
       bcrypt.hash(req.body.password, 10, function(err, hash) {
         var newUser = new User({
@@ -78,11 +78,8 @@ apiRoutes.post('/register', function(req, res) {
             console.log('Saved new user : ', newUser);
           }
         });
-      });
-      // Return success as JSON
-      res.json({
-        success: true,
-        message: 'New user created successfully',
+        // Return success as JSON
+        res.status(200).json({success: true, message: 'New user created successfully'});
       });
     }
   });
@@ -107,7 +104,7 @@ apiRoutes.post('/auth', function(req, res) {
             expiresInMinutes: 60*24
           });
           // return the information including token as JSON
-          res.json({
+          res.status(200).json({
             success: true,
             message: 'Authentication succeeded. Here is your access token',
             user: userObj,
@@ -115,7 +112,7 @@ apiRoutes.post('/auth', function(req, res) {
           });
         }
         else {
-          res.json({
+          res.status(401).json({
             success: false,
             message: 'Authentication failed. Wrong username or password.'
           });
@@ -123,7 +120,7 @@ apiRoutes.post('/auth', function(req, res) {
       });
     }
     else {
-      res.json({
+      res.status(401).json({
         success: false,
         message: 'Authentication failed. Wrong username or password.'
       });
@@ -132,7 +129,7 @@ apiRoutes.post('/auth', function(req, res) {
 });
 
 apiRoutes.get('/me', jwtOpts, function(req, res) {
-  var userObj = jwt.verify(req.token,app.get('superSecret'));
+  var userObj = jwt.verify(req.token, app.get('superSecret'));
   User.findOne({email:userObj.email}, function (err, user) {
     if (err) throw (err);
     res.json({
@@ -212,15 +209,14 @@ app.use('/*', function(req, res){
 });
 
 app.use(function(err, req, res, next) {
-  console.error(err.stack);
   if (err.name == 'UnauthorizedError') {
-    res.status(401).send('User not authorized');
+    res.status(401).json({success: false, message: 'User not authorized'});
   }
   else {
-    res.status(500).send('Something broke!');
+    res.status(500).json({success: false, message: 'Something else went wrong!'});
   }
 });
 
 app.listen(process.env.PORT || 5000);
 
-module.exports = app;
+exports = module.exports = app;
