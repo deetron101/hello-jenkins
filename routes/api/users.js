@@ -1,6 +1,5 @@
 var express     = require('express');
 var jwt         = require('jsonwebtoken'); // used to create, sign, and verify tokens
-var expressJwt  = require('express-jwt'); // used to protect restricted routes
 var usersRoutes = express.Router();
 var app         = require('../../app');
 var User        = require('../../models/user'); // get the User model
