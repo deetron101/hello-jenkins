@@ -48,24 +48,14 @@ app.run( function ($rootScope, AUTH_EVENTS, Auth, $state) {
   $rootScope.$on('$stateChangeStart', function(event, toState, toParams, fromState, fromParams) {
 
     // If User is not logged in
-    if (!getCookie('userrole')) {
-      event.preventDefault();
-      $rootScope.$broadcast(AUTH_EVENTS.notAuthenticated);
-      $state.transitionTo('login');
-    }
     if (toState.data) {
       var authorizedRoles = toState.data.authorizedRoles;
       // User is not authorized
       if (!Auth.isAuthorized(authorizedRoles, getCookie('userrole'))) {
         event.preventDefault();
         $rootScope.$broadcast(AUTH_EVENTS.notAuthorized);
-        $state.transitionTo('dash');
+        $state.transitionTo('login');
       }
-    }
-    // If User is already logged in
-    if (toState.name=="login" && getCookie('userrole')) {
-      event.preventDefault();
-      $state.transitionTo('dash');
     }
     if (toState.name=="logout") {
       removeCookie('userrole');
