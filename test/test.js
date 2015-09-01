@@ -17,11 +17,10 @@ var testUser = {
   password: "password"
 };
 
-describe('POST /api/register', function() {
+describe('POST /api/auth/register', function() {
 
   before(function(done) {
     for (var i in mongoose.connection.collections) {
-      console.log(i);
       mongoose.connection.collections[i].remove();
     }
     done();
@@ -29,7 +28,7 @@ describe('POST /api/register', function() {
 
   it('should respond with success', function(done) {
     request(app)
-    .post('/api/register')
+    .post('/api/auth/register')
     .send(testUser)
     .expect(200)
     .expect('Content-Type', /json/)
@@ -43,7 +42,7 @@ describe('POST /api/register', function() {
 
 var token = null;
 
-describe('POST /api/auth', function() {
+describe('POST /api/auth/login', function() {
   it('should respond with success', function(done) {
     request(app)
     .post('/api/auth')
@@ -60,7 +59,7 @@ describe('POST /api/auth', function() {
   });
 });
 
-describe('GET /api/me', function() {
+describe('GET /api/users/me', function() {
   it('should respond with user info', function(done) {
     request(app)
     .get('/api/me')

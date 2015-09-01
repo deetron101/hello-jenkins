@@ -5,7 +5,7 @@ var userSchema = new Schema({
     name: String,
     email: {type: String, unique: true, dropDups: true },
     password: String,
-    admin: Boolean
+    role: String
 });
 
 /* User model */

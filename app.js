@@ -1,36 +1,36 @@
-/* Packages */
+// Packages
 var express     = require('express');
-var bcrypt      = require('bcrypt');
 var bodyParser  = require('body-parser');
-var fs          = require('fs');
 var morgan      = require('morgan');
 var mongoose    = require('mongoose');
-var multer      = require('multer');
-var jwt         = require('jsonwebtoken'); // used to create, sign, and verify tokens
-var expressJwt  = require('express-jwt'); // used to protect restricted routes
 
-var app         = express();
+var app = module.exports = express();
 
-console.log('Starting in '+app.get('env')+' mode');
-
-/* Config */
+// Includes
 var Config      = require('./config/config.'+app.get('env')); // get the right config file
-/* Models */
-var User        = require('./models/user'); // get the User model
-var Meme        = require('./models/meme'); // get the Meme model
+var Utils       = require('./common/utils');
 
-/* Setup */
+// Set up application logging
+var logger = Utils.getLogger();
+
+// Setup database connection
 mongoose.connect(Config.database);
-app.set('superSecret', Config.secret);
+
+// Set up Morgan logging
 if (Config.morgan) {
   app.use(morgan(Config.morgan));
 }
+
+console.log('Starting in '+app.get('env')+' mode');
+
+logger.log('info','Starting in '+app.get('env')+' mode');
 
 // Use to get info from POST and/or URL parameters
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// Use the following headers for JWT
+// Set up JWT requirements
+app.set('superSecret', Config.secret);
 app.use(function(req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
@@ -38,167 +38,21 @@ app.use(function(req, res, next) {
     next();
 });
 
-var jwtOpts = expressJwt({
-  secret: app.get('superSecret'),
-  getToken: function fromHeaderOrQuerystring (req) {
-    if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
-      req.token = req.headers.authorization.split(' ')[1];
-      return req.token;
-    } else if (req.query && req.query.token) {
-      req.token = req.query.token;
-      return req.token;
-    }
-    return null;
-  }
-});
+logger.log('info','Done with setup and configuration');
 
 // API ROUTES -------------------
 
-// Get an instance of the router for api routes
-var apiRoutes = express.Router();
+var authRoutes = require('./routes/api/auth');
+var usersRoutes = require('./routes/api/users');
+var memesRoutes = require('./routes/api/memes');
 
-apiRoutes.post('/register', function(req, res) {
-  // See if the user already exists
-  User.findOne({ email: req.body.email }, function(err, user) {
-    if (err) throw err;
-    if (user) {
-      res.status(422).json({success: false, message: 'Register failed. User already exists.'});
-    } else {
-      bcrypt.hash(req.body.password, 10, function(err, hash) {
-        var newUser = new User({
-          name: req.body.name,
-          email: req.body.email,
-          password: hash,
-          role: 'pleb'
-        });
-        newUser.save(function(err, newUser) {
-          if (err) {
-            return console.error(err);
-          } else {
-            console.log('Saved new user : ', newUser);
-          }
-        });
-        // Return success as JSON
-        res.status(200).json({success: true, message: 'New user created successfully'});
-      });
-    }
-  });
-});
+app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/memes', memesRoutes);
 
-apiRoutes.post('/auth', function(req, res) {
-  // find the User
-  User.findOne({ email: req.body.email }, function(err, user) {
-    if (err) throw err;
-    if (user) {
-      // Load password hash from DB
-      bcrypt.compare(req.body.password, user.password, function(berr, bres) {
-        if (bres) {
-          // if user is found and password is correct, then create a token
-          var userObj = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role
-          }
-          var token = jwt.sign(userObj, app.get('superSecret'), {
-            expiresInMinutes: 60*24
-          });
-          // return the information including token as JSON
-          res.status(200).json({
-            success: true,
-            message: 'Authentication succeeded. Here is your access token',
-            user: userObj,
-            token: token
-          });
-        }
-        else {
-          res.status(401).json({
-            success: false,
-            message: 'Authentication failed. Wrong username or password.'
-          });
-        }
-      });
-    }
-    else {
-      res.status(401).json({
-        success: false,
-        message: 'Authentication failed. Wrong username or password.'
-      });
-    }
-  });
-});
+// END API ROUTES -------------------
 
-apiRoutes.get('/me', jwtOpts, function(req, res) {
-  var userObj = jwt.verify(req.token, app.get('superSecret'));
-  User.findOne({email:userObj.email}, function (err, user) {
-    if (err) throw (err);
-    res.json({
-      success: true,
-      message: 'This is you',
-      user: user
-    });
-  });
-});
-
-apiRoutes.get('/users', expressJwt({ secret: app.get('superSecret') }), function(req, res) {
-  User.find(function (err, users) {
-    if (err) throw (err);
-    res.json({
-      success: true,
-      message: 'All current users',
-      users: users
-    });
-  });
-});
-
-var storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    var dir = './public/uploads/1'
-    if (!fs.existsSync(dir)){
-      fs.mkdirSync(dir);
-    }
-    cb(null, dir)
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname)
-  }
-});
-
-var upload = multer({ storage: storage }).array('files');
-
-apiRoutes.post('/upload', upload, function(req, res) {
-  console.log("Uploading files");
-  saveFiles(req.files);
-  res.json({
-    success: true,
-    message: 'Your file has been uploaded successfully'
-  });
-});
-
-var saveFiles = function(files) {
-  for (var i in files) {
-    file = files[i];
-    var newMeme = new Meme({
-        userid: 1,
-        filename: file.filename,
-        name: file.originalfilename
-    });
-    newMeme.save(function(err, newMeme) {
-      if (err) {
-        return console.error(err);
-      } else {
-        console.log('Saved : ', newMeme);
-        Meme.find(function (err, memes) {
-        if (err) return console.error(err);
-          console.log(memes);
-        });
-      }
-    });
-  }
-}
-
-// Apply the api routes to the application with the prefix /api
-app.use('/api', apiRoutes);
+// OTHER ROUTES -------------------
 
 app.use('/', express.static(__dirname + '/public'));
 app.use('/images', express.static(__dirname + '/public/uploads'));
@@ -208,15 +62,40 @@ app.use('/*', function(req, res){
   res.sendFile(__dirname + '/public/index.html');
 });
 
-app.use(function(err, req, res, next) {
+// END OTHER ROUTES -------------------
+
+// Error handling
+
+app.use(logErrors);
+app.use(clientErrorHandler);
+app.use(errorHandler);
+
+function logErrors(err, req, res, next) {
+  logger.log('error', err.name, { error : err.stack });
+  next(err);
+}
+
+function clientErrorHandler(err, req, res, next) {
+  // To Do - make this just for xhrs
+  console.log(err.name+': '+err.message);
   if (err.name == 'UnauthorizedError') {
-    res.status(401).json({success: false, message: 'User not authorized'});
+    res.status(403).json({success: false, message: 'User not authorized'});
+    next('route');
+  }
+  else if (err.name == 'TokenExpiredError') {
+    res.status(401).json({success: false, message: 'User token expired'});
+    next('route');
+  }
+  else if (err.name == 'JsonWebTokenError') {
+    res.status(401).json({success: false, message: 'User token must be provided'});
+    next('route');
   }
   else {
-    res.status(500).json({success: false, message: 'Something else went wrong!'});
+    res.status(500).json({success: false, message: 'Unidentified Error'});
+    next(err);
   }
-});
+}
+
+function errorHandler(err, req, res, next) {}
 
 app.listen(process.env.PORT || 5000);
-
-exports = module.exports = app;

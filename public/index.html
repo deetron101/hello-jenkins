@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html id="ng-app" data-ng-app="memedApp">
 
 <head>
     <meta charset="utf-8">
@@ -13,7 +13,10 @@
 
 </head>
 
-<body data-ng-app="memedApp">
+<body data-ng-controller="CommonController">
+
+<div data-ng-if="currentUser" data-ng-cloak="">Welcome, {{ currentUser.name }}</div>
+{{ currentUser }}
 
 <div data-ui-view=""></div>
 
@@ -24,8 +27,11 @@
 <script src="/nm/angular/angular.js"></script>
 <script src="/nm/angular-ui-router/release/angular-ui-router.js"></script>
 
+<script src="js/configs/configs.js"></script>
+<script src="js/controllers/common.js"></script>
 <script src="js/controllers/auth.js"></script>
 <script src="js/controllers/dash.js"></script>
+<script src="js/controllers/create.js"></script>
 <script src="js/services/auth.js"></script>
 <script src="js/services/users.js"></script>
 <script src="js/app.js"></script>

@@ -8,7 +8,7 @@ users.factory('Users', function($http) {
   users.getUsers = function() {
     var response = $http({
       method:'get',
-      url:'api/users'
+      url:'api/users/all'
     });
     return response;
   };
@@ -16,7 +16,7 @@ users.factory('Users', function($http) {
   users.getMe = function() {
     var response = $http({
       method:'get',
-      url:'api/me'
+      url:'api/users/me'
     });
     return response;
   }
