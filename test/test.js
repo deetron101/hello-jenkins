@@ -7,7 +7,8 @@ describe('GET /', function() {
   it('should respond with index page', function(done) {
     request(app)
     .get('/')
-    .expect(200, done);
+    .expect(200);
+    done();
   });
 });
 
@@ -45,7 +46,7 @@ var token = null;
 describe('POST /api/auth/login', function() {
   it('should respond with success', function(done) {
     request(app)
-    .post('/api/auth')
+    .post('/api/auth/login')
     .send(testUser)
     .expect(200)
     .expect('Content-Type', /json/)
@@ -62,7 +63,7 @@ describe('POST /api/auth/login', function() {
 describe('GET /api/users/me', function() {
   it('should respond with user info', function(done) {
     request(app)
-    .get('/api/me')
+    .get('/api/users/me')
     .set('Authorization', 'Bearer '+token)
     .expect(200)
     .expect('Content-Type', /json/)
@@ -76,10 +77,10 @@ describe('GET /api/users/me', function() {
   });
 });
 
-describe('GET /api/users', function() {
+describe('GET /api/users/all', function() {
   it('should respond with users', function(done) {
     request(app)
-    .get('/api/users')
+    .get('/api/users/all')
     .set('Authorization', 'Bearer '+token)
     .expect(200)
     .expect('Content-Type', /json/)

@@ -34,6 +34,7 @@ app.set('superSecret', Config.secret);
 app.use(function(req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
+    res.setHeader('Content-Type', 'application/json');
     res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type, Authorization');
     next();
 });
@@ -55,10 +56,11 @@ app.use('/api/memes', memesRoutes);
 // OTHER ROUTES -------------------
 
 app.use('/', express.static(__dirname + '/public'));
+
 app.use('/images', express.static(__dirname + '/public/uploads'));
 app.use('/nm', express.static(__dirname + '/node_modules'));
 
-app.use('/*', function(req, res){
+app.use('/*', function(req, res) {
   res.sendFile(__dirname + '/public/index.html');
 });
 
